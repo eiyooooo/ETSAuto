@@ -208,7 +208,7 @@ PS: 修改完系统变量后需要重新打开一个新的 PowerShell。
 
 - “1”键退出自动驾驶
 - “6”键激活自动驾驶及切换道路类型
-- ctrl+Q退出
+- “ctrl+Q”退出
 
 # reference
 [CLRNet](https://github.com/Turoad/CLRNet)
