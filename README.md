@@ -1,43 +1,16 @@
-# Self-driving-Truck-in-Euro-Truck-Simulator2
+# ETSAuto
 ### 目录
 + [简介](#简介)
-+ [快速开始](#快速开始)
 + [环境搭建](#如何从零开始构建环境)
 + [开始自动驾驶](#如何自动驾驶)
 + [reference](#reference)
 
 # 简介
-这是一个在欧洲卡车模拟2上运行的辅助驾驶系统。采用YOLOV6进行目标检测，CLRNet进行进行车道线检测，monodepth2进行深度估计，以及利用其他传统方法进行环境感知。在控制方面，采用PID进行横向纵向控制，采用purepursuit进行低速状态下的横向控制，利用有限状态机进行决策场景切换。
+**ETSAuto**是在欧洲卡车模拟2(ETS2)上运行的辅助驾驶系统。采用YOLOV6进行目标检测，CLRNet进行进行车道线检测，以及利用其他方法进行自车和环境感知。在控制方面，采用PID进行横向纵向控制，采用purepursuit进行低速状态下的横向控制，利用有限状态机进行决策场景切换。
 
-This is a self-driving truck test in Euro Truck Simulator2.
+演示视频：https://www.bilibili.com/video/BV1sT411m7hE/
 
-### Perception
-Use yolov6 to detect objects, clrnet to detect lane
-
-### Control
-Use PID and pure pursuit to control
-
-### Plan
-Use finite state machine
-
-# 快速开始
-1.开始前，请确保CUDA, cudnn, tensorrt安装完成。没安装的话，请先安装CUDA，CUDA的版本决定cudnn, tensorrt, 以及一些python库的版本。CUDA版本由显卡决定，不一定和我一样，安装尽量高的版本。
-
-2.车道线检测与物体检测的pt文件和onnx文件已提供，PaddleOCR权重文件需前往PaddleOCR官方仓库下载。
-
-3.下载[onnx权重文件](https://github.com/Yutong-gannis/Self-driving-Truck-in-Euro-Truck-Simulator2/releases/tag/v1.0)，tensorrt文件须用onnx文件进行转换。CLRNet权重转换方法可参考[CLRNet-onnxruntime-and-tensorrt-demo](https://github.com/xuanandsix/CLRNet-onnxruntime-and-tensorrt-demo)，YOLOV6转换方法`python tools/export.py -o [onnx文件路径] -e [engine文件路径] --end2end`
-
-例如`python tools/export.py -o yolov6n_bdd_40.onnx -e yolov6n_bdd_40.engine --end2end`
-
-也可参考[TensorRT-For-YOLO-Series](https://github.com/Linaom1214/TensorRT-For-YOLO-Series)。
-
-4.须自行下载vjoy虚拟手柄软件。
-
-5.因为时间原因，未尝试更多的环境，python环境尽量与requirements.txt中保持一致。
-
-6.main.py中设置的根目录设置为自己电脑上的文件根目录。
-
-终端输入`python script/main.py`以运行。
+ETSAuto 2.0dev模型：https://github.com/Yutong-gannis/ETSAuto/tree/v2.0dev
 
 # 如何从零开始构建环境
 
@@ -128,10 +101,13 @@ Use finite state machine
 ```bash
 # 注意 tensorrt 以及 python 的版本
 python -m pip install $env:TENSORRT_PATH\python\tensorrt-8.4.2.4-cp38-none-win_amd64.whl
+
 # cuda v10.2
 python -m pip install -r requirements.txt
-# cuda v11.7
-# python -m pip install -r requirements_cu117.txt
+# cuda v11.7(cuda为v10.2的忽略此步)
+python -m pip install -r requirements_cu117.txt
+
+python -m pip uninstall -y opencv-python-headless
 python -m pip install -r last_requirements.txt
 ```
 
@@ -148,7 +124,7 @@ True
 
 ### 构建 TensorRT 文件
 
-- 下载 [onnx 权重文件](https://github.com/Yutong-gannis/Self-driving-Truck-in-Euro-Truck-Simulator2/releases)，放在 `<PROJECT_PATH>/engines` 文件夹下（手动创建）。
+- 下载 [onnx 权重文件](https://github.com/Yutong-gannis/Self-driving-Truck-in-Euro-Truck-Simulator2/releases)，放在 `<PROJECT_PATH>/weights` 文件夹下（手动创建）。
 
 - 安装权重转换所依赖的包
 
@@ -156,26 +132,21 @@ True
     python -m pip install -r ./tools/requirements.txt
     ```
 
-- 构建 YOLOV6 的 TensorRT 文件
+- 构建 Tensorrt 文件
 
     ```bash
-    python ./tools/export.py -o ./engines/yolov6s_bdd_60.onnx -e ./engines/yolov6s_bdd_60.engine --end2end
+    python tools/export_trt.py
     ```
 
-    如在命令行中出现 `FP16 is not supported natively on this platform/device` 的提示消息请在命令行后面添加 `-p fp32` 或者 `-p int8`，根据所使用显卡不同而不同。
+    如在命令行中出现 `FP16 is not supported natively on this platform/device` 的提示消息请在命令行后面添加 `-p fp32` 或者 `-p int8`，根据所使用显卡不同而不同。笔记本上转换大概需要七分钟左右。
 
-- 构建 CLRNet 的 TensorRT 文件
-
-    ```bash
-    polygraphy surgeon sanitize ./engines/llamas_dla34.onnx --fold-constants --output ./engines/llamas_dla34_tmp.onnx
-    trtexec --onnx=./engines/llamas_dla34_tmp.onnx --saveEngine=./engines/llamas_dla34.engine
-    ```
 
 ### 已测试的环境
 
 Windows11 + Python3.8 的条件下在如下环境中运行成功。
 
 - CUDA 10.2 + cuDNN 8.7.0 + TensorRT 8.4.2.4
+- CUDA 11.2 + cuDNN 8.7.0 + TensorRT 8.4.2.4
 - CUDA 11.7 + cuDNN 8.7.0 + TensorRT 8.4.2.4
 - CUDA 11.7 + cuDNN 8.7.0 + TensorRT 8.4.3.1
 
@@ -198,7 +169,8 @@ PS: 修改完系统变量后需要重新打开一个新的 PowerShell。
 
 - 选项 - 图像，取消全屏模式，分辨率设置为 1360x768。
 - 选项 - 控制，选择 `键盘 + vJoy Device`。
-- 把游戏窗口移动到合适的位置。
+- 把游戏窗口移动到合适的位置（注意：左右精调几个像素才能保证车辆行驶在道路正中间）。
+- 把导航地图调成最大。
 
 ### 设置脚本
 
@@ -209,6 +181,12 @@ PS: 修改完系统变量后需要重新打开一个新的 PowerShell。
 - “1”键退出自动驾驶
 - “6”键激活自动驾驶及切换道路类型
 - “ctrl+Q”退出
+
+# 赞助
+如果您喜欢这个项目，并希望我继续下去，可以考虑赞助我！感谢所有的爱和支持
+
+![a6x18041cro5ffnvur8sb1c](https://github.com/Yutong-gannis/ETSAuto/assets/69740611/11d36472-3cfa-42bc-b8ef-f71576f872c7)
+
 
 # reference
 [CLRNet](https://github.com/Turoad/CLRNet)

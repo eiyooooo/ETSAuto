@@ -3,23 +3,27 @@ import numpy as np
 class Bev_Lane:  # 封装车道线类
     def __init__(self, cls, position_type, fit, endpoint, startpoint, lanes_pts):
         self.cls = cls  # 车道线线型 虚线：0， 实线：1
-        self.position_type = position_type
+        self.position_type_ego = position_type
         ###############车道线类型################
-        # 左边界： -4
-        # 左边第三根车道线：-3
         # 左边第二根（左临近车道的左边界）：-2
         # 当前车道左边界：-1
         # 当前车道中心线：0
-        # 当前车道右边界：1
-        # 右边第二根（右临近车道的左边界）：2
-        # 右边第三根车道线：3
-        # 右边界：4
-        # 未知车道线：5 未定义前全部设置为5
+        # 当前车道有边界：1
+        # 右边第二根（左临近车道的左边界）：2
+        # 位置：5
+        #######################################
+        self.position_type_nav = None
+        ###############车道线类型################
+        # 导航车道右边界：1
+        # 导航车道左边界（超车道右边界）：2
+        # 超车道左边界：3
+        # 未知：5
         #######################################
         self.fit = fit  # 三次函数拟合车道线的参数 [a, b, c] 纵是X轴，横是Y轴
         self.endpoint = endpoint  # 远离本车的端点坐标
         self.startpoint = startpoint  # 接近本车的端点坐标
         self.pts = lanes_pts  # 车道线上所有的点
+
 
 def FCW(nav_line, speed):
     # 根据速度计算车辆前向物体检测线长度
